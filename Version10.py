@@ -19,7 +19,19 @@ class App(ct.CTk):
         self.canvas.pack(fill="both", expand=True)
         self.current_scene = "main_menu"
         self.inventory = []
+        self.health = 100
         self.show_scene(self.current_scene)
+
+    # Play background music continuously
+        self.play_background_music("Q:\\Ibrahim\\Programs\\background_music.mp3")  # Replace with your background music file path
+
+    def play_background_music(self, music_path):
+        pygame.mixer.music.load(music_path)  # Load the music
+        pygame.mixer.music.set_volume(0.2)  # Set the volume (0.0 to 1.0)
+        pygame.mixer.music.play(loops=-1, start=0.0)  # Play the music indefinitely (loops=-1)
+
+    def stop_background_music(self):
+        pygame.mixer.music.stop()
 
     def load_image(self, image_path):
         image = Image.open(image_path)
@@ -184,14 +196,15 @@ class App(ct.CTk):
         self.clear_scene()
         self.load_image("Q:\\Ibrahim\\Programs\\mine.jpg")
         self.create_canvas_label("You took the pickaxe and lantern. The adventure continues...", ("Times new roman", 40), 350)
-        self.create_canvas_button("Continue", lambda: self.show_scene("final_confrontation"), ("Times new roman", 50), 900)
+        self.create_canvas_button("Continue", lambda: self.show_scene("forest"), ("Times new roman", 50), 900)
 
     def leave_mine(self):
         self.clear_scene()
         self.load_image("Q:\\Ibrahim\\Programs\\mine.jpg")
-        self.create_canvas_label("You decide to leave the mine")
+        self.create_canvas_label("You decide to leave the mine. As you step outside, the wind picks up and the clouds darken.", ("Times new roman", 40), 350)
+        self.create_canvas_button("Continue", lambda: self.show_scene("forest"), ("Times new roman", 50), 700)
+        pygame.mixer.Sound("Q:\\Ibrahim\\Programs\\wind_sound.mp3").play()
 
-    # Additional scene code below
 
     def show_forest(self):
         self.load_image("Q:\\Ibrahim\\Programs\\forest.jpg")
@@ -227,21 +240,29 @@ class App(ct.CTk):
         self.create_canvas_button("Continue", lambda: self.show_scene("old_mansion"), ("Times new roman", 50), 900)
 
     def fight_beast(self):
-        pygame.mixer.Sound("Q:\\Ibrahim\\Programs\\fight_sound.wav").play()  # Play fight sound
+        pygame.mixer.Sound("Q:\\Ibrahim\\Programs\\fight_sound.mp3").play()  # Play fight sound
         if "amulet" in self.inventory:
             self.clear_scene()
             self.load_image("Q:\\Ibrahim\\Programs\\forest.jpg")
             self.create_canvas_label("The amulet gives you strength, and you defeat the beast.", ("Times new roman", 40), 350)
             self.create_canvas_button("Continue", lambda: self.show_scene("old_mansion"), ("Times new roman", 50), 900)
         else:
-            self.clear_scene()
-            self.load_image("Q:\\Ibrahim\\Programs\\game_over.jpg")
-            self.create_canvas_label("The beast overpowers you. Game over.", ("Times new roman", 40), 350)
-            pygame.mixer.Sound("Q:\\Ibrahim\\Programs\\game_over_sound.wav").play()  # Play game over sound
-            self.create_canvas_button("Try Again", lambda: self.show_scene("main_menu"), ("Times new roman", 50), 900)
+            self.health -= 30  # Deduct health if player fights without amulet
+            if self.health <= 0:
+                self.clear_scene()
+                self.load_image("Q:\\Ibrahim\\Programs\\game_over.jpg")
+                self.create_canvas_label("The beast overpowers you. Game over.", ("Times new roman", 40), 350)
+                pygame.mixer.Sound("Q:\\Ibrahim\\Programs\\game_over_sound.wav").play()  # Play game over sound
+                self.create_canvas_button("Try Again", lambda: self.show_scene("main_menu"), ("Times new roman", 50), 900)
+            else:
+                self.clear_scene()
+                self.load_image("Q:\\Ibrahim\\Programs\\forest.jpg")
+                self.create_canvas_label(f"You fought the beast but lost some health. Your health: {self.health}", ("Times new roman", 40), 350)
+                self.create_canvas_button("Continue", lambda: self.show_scene("forest"), ("Times new roman", 50), 900)
+
 
     def run_from_beast(self):
-        pygame.mixer.Sound("Q:\\Ibrahim\\Programs\\escape_sound.mp3").play()  # Play escape sound
+        pygame.mixer.Sound("Q:\\Ibrahim\\Programs\\escape_sound.mp3").play()  # Escape sound
         chance_to_escape = random.randint(1, 3)
         if chance_to_escape == 1:
             self.clear_scene()
@@ -249,11 +270,19 @@ class App(ct.CTk):
             self.create_canvas_label("You manage to escape the beast.", ("Times new roman", 40), 350)
             self.create_canvas_button("Continue", lambda: self.show_scene("old_mansion"), ("Times new roman", 50), 900)
         else:
-            self.clear_scene()
-            self.load_image("Q:\\Ibrahim\\Programs\\game_over.jpg")
-            self.create_canvas_label("The beast catches you.", ("Times new roman", 40), 350)
-            pygame.mixer.Sound("Q:\\Ibrahim\\Programs\\game_over_sound.mp3").play()  # Play game over sound
-            self.create_canvas_button("Try Again", lambda: self.show_scene("main_menu"), ("Times new roman", 50), 900)
+            self.health -= 20  # Deduct health if caught
+            if self.health <= 0:
+                self.clear_scene()
+                self.load_image("Q:\\Ibrahim\\Programs\\game_over.jpg")
+                self.create_canvas_label("The beast catches you and you lose all your health.", ("Times new roman", 40), 350)
+                pygame.mixer.Sound("Q:\\Ibrahim\\Programs\\game_over_sound.mp3").play()  # Play game over sound
+                self.create_canvas_button("Try Again", lambda: self.show_scene("main_menu"), ("Times new roman", 50), 900)
+            else:
+                self.clear_scene()
+                self.load_image("Q:\\Ibrahim\\Programs\\forest.jpg")
+                self.create_canvas_label(f"The beast catches you. Your health: {self.health}", ("Times new roman", 40), 350)
+                self.create_canvas_button("Continue", lambda: self.show_scene("forest"), ("Times new roman", 50), 900)
+
 
     def leave_forest(self):
         self.clear_scene()
@@ -306,13 +335,13 @@ class App(ct.CTk):
             self.clear_scene()
             self.load_image("Q:\\Ibrahim\\Programs\\final_battle_failure.jpg")
             self.create_canvas_label("You failed to defeat the dark force.\nTry again!", ("Times new roman", 40), 350)
-            pygame.mixer.Sound("Q:\\Ibrahim\\Programs\\game_over_sound.wav").play()  # Play failure sound
+            pygame.mixer.Sound("Q:\\Ibrahim\\Programs\\game_over_sound.mp3").play()  # Play failure sound
             self.create_canvas_button("Try Again", lambda: self.show_scene("main_menu"), ("Times new roman", 50), 900)
 
     def use_special_item(self):
         if "lantern" in self.inventory:
             self.clear_scene()
-            self.load_image("Q:\\Ibrahim\\Programs\\final_battle_lantern.jpg")
+            self.load_image("Q:\\Ibrahim\\Programs\\final_battle_lantern.png")
             self.create_canvas_label("The lantern reveals the true form of the dark force!\nYou defeat it with your newfound strength.", ("Times new roman", 40), 350)
             self.create_canvas_button("Continue", lambda: self.show_scene("victory"), ("Times new roman", 50), 900)
         else:
@@ -325,8 +354,7 @@ class App(ct.CTk):
 
     def show_victory(self):
         self.load_image("Q:\\Ibrahim\\Programs\\victory.jpg")
-        self.create_canvas_label("Congratulations! You have defeated the dark force and escaped the nightmare.\nYou are victorious!", 
-                                ("Times new roman", 60, "italic"), 350)
+        self.create_canvas_label("Congratulations! You have defeated the dark force and escaped the nightmare.\nYou are victorious!",("Times new roman", 60, "italic"), 350)
         self.create_canvas_button("Play Again", lambda: self.show_scene("main_menu"), ("Times new roman", 50), 700)
         self.create_canvas_button("Exit Game", lambda: self.quit(), ("Times new roman", 50), 900)
         pygame.mixer.Sound("Q:\\Ibrahim\\Programs\\victory_sound.mp3").play()  # Play victory sound
