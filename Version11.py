@@ -34,7 +34,7 @@ class HorrorGame(ct.CTk):
         # UI Elements
         self.canvas = ct.CTkCanvas(self, width=1920, height=1080, bg="black", highlightthickness=0)
         self.canvas.pack(fill="both", expand=True)
-        self.status_label = ct.CTkLabel(self, text="", font=("blood lust", 20), fg_color="gray")
+        self.status_label = ct.CTkLabel(self, text="", font=("blood lust", 28), fg_color="gray")
         self.canvas.create_window(960, 20, window=self.status_label)
 
         # Start Game
@@ -69,7 +69,7 @@ class HorrorGame(ct.CTk):
             print(f"Error: Image file '{path}' not found.")
             self.load_image(f"{RESOURCE_PATH}{DEFAULT_IMAGE}")
 
-    def create_label(self, text, font=("blood lust", 40), y=350, fg_color="#040720"):
+    def create_label(self, text, font=("blood lust", 55), y=350, fg_color="transparent"):
         """Creates and places a label."""
         label = ct.CTkLabel(self, text=text, font=font, fg_color=fg_color)
         self.canvas.create_window(960, y, window=label)
@@ -104,7 +104,8 @@ class HorrorGame(ct.CTk):
     def update_status(self):
         """Updates the status label."""
         status_text = f"Health: {self.health} | Inventory: {', '.join(self.inventory)}"
-        self.status_label.configure(text=status_text)
+        self.status_label = ct.CTkLabel(self, text=status_text, font=("Times New Roman", 20))
+        self.canvas.create_window(960, 20, window=self.status_label)
 
     def toggle_pause(self):
         """Toggles the pause state of the game."""
@@ -152,7 +153,7 @@ class HorrorGame(ct.CTk):
                 self.inventory = data["inventory"]
                 self.health = data["health"]
             messagebox.showinfo("Load Game", "Game has been loaded successfully!")
-            self.show_scene()
+            self.show_scene(self.current_scene)
         except (FileNotFoundError, json.JSONDecodeError):
             messagebox.showerror("Load Game", "No saved game file found!")
 
@@ -217,9 +218,9 @@ class HorrorGame(ct.CTk):
 
     def show_main_menu(self):
         self.load_image("Resources/1234.jpg")
-        self.create_label("Welcome to the Horror Game", font=("blood lust", 60, "italic"), y=350)
+        self.create_label("Welcome to the Horror Game", font=("blood lust", 70, "italic"), y=350)
         self.create_button("How to Play", lambda: self.show_scene("how_to_play"), y=700)
-        self.create_button("Start Game", lambda: self.show_scene("graveyard"), y=900)
+        self.create_button("Start Game", lambda: self.show_scene("graveyard"), y=800)
         self.add_universal_buttons()
 
     def show_how_to_play(self):
@@ -235,15 +236,16 @@ class HorrorGame(ct.CTk):
     def show_graveyard(self):
         self.load_image("Resources/graveyard.jpg")
         self.create_label("You are stranded in an abandoned graveyard.")
-        self.create_button("Search", self.search_graveyard, y=600)
-        self.create_button("Leave", lambda: self.leave_location("graveyard"))
+        self.create_button("Search for anything", self.search_graveyard, y=600)
+        self.create_button("Leave graveyard", lambda: self.leave_location("graveyard"))
+        self.current_scene = "graveyard"
         self.add_universal_buttons()
 
     def search_graveyard(self):
         self.clear_scene()
         self.load_image("Resources/graveyard.jpg")
         self.create_label("You find a rusted key and an old map.")
-        self.create_button("Take Items", self.take_graveyard_items)
+        self.create_button("Take them", self.take_graveyard_items)
         self.create_button("Leave", lambda: self.leave_location("graveyard"), y=800)
         self.add_universal_buttons()
 
@@ -261,8 +263,12 @@ class HorrorGame(ct.CTk):
         self.add_universal_buttons()
 
     def fight_ghost(self):
+        self.clear_scene()
+        self.load_image("Resources/graveyard.jpg")
+        self.create_label("You try to fight the ghost, but it's too powerful.")
+        self.create_label("But you some how manage to escape.")
         if "key" in self.inventory:
-            self.show_scene("haunted_house")
+            self.after(3000, lambda: self.show_scene("haunted_house"))
         else:
             self.game_over("The ghost overpowers you. Game Over.")
 
@@ -277,6 +283,7 @@ class HorrorGame(ct.CTk):
         self.create_label("You arrive at a creepy house.")
         self.create_button("Enter House", self.enter_house)
         self.create_button("Leave House", lambda: self.leave_location("haunted_house"), y=800)
+        self.current_scene = "haunted_house"
         self.add_universal_buttons()
 
     def enter_house(self):
@@ -290,6 +297,7 @@ class HorrorGame(ct.CTk):
         self.create_label("You enter an abandoned mine. The air is thick with dust.")
         self.create_button("Search for Items", self.search_mine)
         self.create_button("Leave Mine", self.leave_mine, y=800)
+        self.current_scene = "abandoned_mine"
         self.add_universal_buttons()
 
     def search_mine(self):
@@ -301,6 +309,7 @@ class HorrorGame(ct.CTk):
         self.add_universal_buttons()
 
     def take_mine_items(self):
+        self.clear_scene()
         self.inventory.extend(["pickaxe", "lantern"])
         self.load_image("Resources/mine.jpg")
         self.create_label("You took the pickaxe and lantern. The adventure continues...")
@@ -317,9 +326,10 @@ class HorrorGame(ct.CTk):
 
     def show_forest(self):
         self.load_image("Resources/forest.jpg")
-        self.create_label("You enter a spooky forest. The trees whisper secrets.")
+        self.create_label("You enter a spooky forest. The trees are whispering some secrets.")
         self.create_button("Explore the Forest", self.explore_forest)
         self.create_button("Leave Forest", self.leave_forest, y=800)
+        self.current_scene = "forest"
         self.add_universal_buttons()
 
     def explore_forest(self):
@@ -388,6 +398,7 @@ class HorrorGame(ct.CTk):
                 self.add_universal_buttons()
 
     def run_from_beast(self):
+        self.clear_scene()
         self.play_sound("Resources/escape_sound.mp3")
         chance = random.randint(1, 3)
         if chance == 1:
@@ -420,10 +431,12 @@ class HorrorGame(ct.CTk):
         self.add_universal_buttons()
 
     def show_old_mansion(self):
+        self.clear_scene()
         self.load_image("Resources/old_mansion.jpg")
-        self.create_label("You arrive at an old, creepy mansion.")
+        self.create_label("You arrive at an old, Haunted mansion.")
         self.create_button("Enter Mansion", self.enter_mansion)
         self.create_button("Leave Mansion", self.leave_mansion, y=800)
+        self.current_scene = "old_mansion"
         self.add_universal_buttons()
 
     def enter_mansion(self):
@@ -437,7 +450,7 @@ class HorrorGame(ct.CTk):
             self.clear_scene()
             self.load_image("Resources/old_mansion.jpg")
             self.create_label("Without the amulet, the mansion traps you inside.")
-            self.create_button("Try Again", self.reset_game)
+            self.create_button("play again", self.reset_game)
             self.add_universal_buttons()
 
     def leave_mansion(self):
@@ -450,26 +463,94 @@ class HorrorGame(ct.CTk):
     def show_final_confrontation(self):
         self.load_image("Resources/final_battle.jpg")
         self.create_label(
-            "The final confrontation begins! You stand before the dark force that has been haunting you.\n"
+            "The final confrontation begins! \nYou stand before the dark force that has been haunting you.\n"
             "Do you choose to fight or use a special item?")
         self.create_button("Fight", self.fight_dark_force)
         self.create_button("Use Item", self.use_special_item, y=800)
         self.add_universal_buttons()
     
     def fight_dark_force(self):
-        if "pickaxe" in self.inventory and "lantern" in self.inventory:  
+        """Enhanced fight mechanics for the final confrontation."""
+        self.clear_scene()
+        self.load_image("Resources/final_battle.jpg")
+        self.create_label("The dark force attacks! Prepare for battle.", font=("blood lust", 40), y=100)
+        
+        # Initial battle state
+        player_health = self.health
+        enemy_health = 150
+        player_stamina = 50
+
+        def player_turn():
+            """Handles player's turn in the fight."""
             self.clear_scene()
-            self.load_image("Resources/final_battle_success.jpg")
-            self.create_label("You use the pickaxe and lantern to defeat the dark force!\nVictory is yours!")
-            self.create_button("Celebrate Victory", self.show_victory)
-            self.add_universal_buttons()
-        else:
+            self.load_image("Resources/final_battle.jpg")
+            self.create_label(f"Your Health: {player_health} | Stamina: {player_stamina}\nEnemy Health: {enemy_health}", font=("blood lust", 30), y=100)
+            
+            self.create_button("Attack", lambda: player_attack(), y=600)
+            self.create_button("Defend", lambda: player_defend(), y=700)
+            self.create_button("Use Item", lambda: player_use_item(), y=800)
+
+        def enemy_turn():
+            """Handles enemy's turn in the fight."""
+            nonlocal player_health, enemy_health
             self.clear_scene()
-            self.load_image("Resources/final_battle_failure.jpg")
-            self.create_label("You failed to defeat the dark force.\nTry again!")
-            self.play_sound("Resources/game_over_sound.mp3")
-            self.create_button("Try Again", self.show_scene("main_menu"))
-            self.add_universal_buttons()
+            damage = random.randint(10, 30)
+            player_health -= damage
+            self.create_label(f"The dark force attacks! You take {damage} damage.\nYour Health: {player_health}", font=("blood lust", 30), y=100)
+            
+            if player_health <= 0:
+                self.game_over("You were defeated by the dark force.")
+            else:
+                self.create_button("Next Turn", player_turn, y=800)
+
+        def player_attack():
+            """Player's attack move."""
+            nonlocal enemy_health, player_stamina
+            if player_stamina >= 10:
+                damage = random.randint(15, 30)
+                enemy_health -= damage
+                player_stamina -= 10
+                self.create_label(f"You attack the dark force, dealing {damage} damage!\nEnemy Health: {enemy_health}", font=("blood lust", 30), y=100)
+            else:
+                self.create_label("You are too tired to attack! Regain stamina by defending.", font=("blood lust", 30), y=100)
+            
+            if enemy_health <= 0:
+                self.show_victory()
+            else:
+                self.create_button("Enemy's Turn", enemy_turn, y=800)
+
+        def player_defend():
+            """Player's defensive move."""
+            nonlocal player_stamina
+            stamina_gain = random.randint(10, 20)
+            player_stamina += stamina_gain
+            self.create_label(f"You defend and regain {stamina_gain} stamina!\nStamina: {player_stamina}", font=("blood lust", 30), y=100)
+            self.create_button("Enemy's Turn", enemy_turn, y=800)
+
+        def player_use_item():
+            """Player uses an item from the inventory."""
+            nonlocal player_health, enemy_health
+            if "amulet" in self.inventory:
+                effect = random.choice(["heal", "damage"])
+                if effect == "heal":
+                    heal_amount = random.randint(20, 40)
+                    player_health += heal_amount
+                    self.create_label(f"The amulet heals you for {heal_amount} health!\nYour Health: {player_health}", font=("blood lust", 30), y=100)
+                else:
+                    damage = random.randint(30, 50)
+                    enemy_health -= damage
+                    self.create_label(f"The amulet emits a blinding light, dealing {damage} damage to the enemy!\nEnemy Health: {enemy_health}", font=("blood lust", 30), y=100)
+                self.inventory.remove("amulet")
+            else:
+                self.create_label("You have no items to use!", font=("blood lust", 30), y=100)
+            
+            if enemy_health <= 0:
+                self.show_victory()
+            else:
+                self.create_button("Enemy's Turn", enemy_turn, y=800)
+
+        player_turn()
+
     
     def use_special_item(self):
         if "lantern" in self.inventory:
